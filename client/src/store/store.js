@@ -1,6 +1,6 @@
 // src/store/store.js
 import { configureStore } from "@reduxjs/toolkit";
-import notesReducer from "./notesSlice"; // podłączymy slice z notatkami
+import notesReducer from "./notesSlice.js"; // podłączymy slice z notatkami
 
 // Tworzymy store aplikacji.
 // Każde pole w "reducer" to jeden "kawałek" (slice) stanu.

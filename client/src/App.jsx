@@ -1,7 +1,7 @@
 // src/App.jsx
 import { useState, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { addNote, removeNote } from "./store/notesSlice";
+import { addNote, removeNote } from "./store/notesSlice.js";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
