@@ -1,5 +1,5 @@
 // src/App.jsx
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { addNote, removeNote } from "./store/notesSlice.js";
 import Calendar from "react-calendar";
@@ -12,6 +12,21 @@ function App() {
 
   // 2) Dostęp do dispatch (wysyłanie akcji do store)
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    async function fetchNotes() {
+      try {
+        // Wysyłamy GET do backendu
+        const response = await fetch("http://localhost:3000/notes");
+        const data = await response.json(); // odczytujemy JSON
+        dispatch({ type: "notes/setNotes", payload: data }); // zapisujemy w Reduxie
+      } catch (error) {
+        console.error("Błąd pobierania notatek:", error);
+      }
+    }
+
+    fetchNotes();
+  }, [dispatch]);
 
   // 3) Lokalny stan formularza
   const [text, setText] = useState("");
@@ -30,17 +45,39 @@ function App() {
     [notes, selectedDateStr]
   );
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const trimmed = text.trim();
     if (!trimmed) return;
-    dispatch(
-      addNote({
-        id: Date.now(),
-        text: trimmed,
-        date: selectedDateStr, // UŻYWAMY daty z kalendarza
-      })
-    );
-    setText("");
+
+    const newNote = {
+      id: Date.now(),
+      text: trimmed,
+      date: selectedDateStr,
+    };
+
+    try {
+      // Wysyłamy POST do backendu
+      const response = await fetch("http://localhost:3000/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newNote),
+      });
+
+      const savedNote = await response.json(); // backend zwraca notatkę z potwierdzeniem
+      dispatch(addNote(savedNote)); // dopiero teraz zapisujemy w Redux
+      setText("");
+    } catch (error) {
+      console.error("Błąd dodawania notatki:", error);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await fetch(`http://localhost:3000/notes/${id}`, { method: "DELETE" });
+      dispatch(removeNote(id)); // dopiero teraz usuwamy z Redux
+    } catch (error) {
+      console.error("Błąd usuwania notatki:", error);
+    }
   };
 
   return (
@@ -68,9 +105,7 @@ function App() {
             {notesForSelected.map((note) => (
               <li key={note.id} style={{ marginBottom: 6 }}>
                 {note.text}{" "}
-                <button onClick={() => dispatch(removeNote(note.id))}>
-                  Usuń
-                </button>
+                <button onClick={() => handleDelete(note.id)}>Usuń</button>
               </li>
             ))}
             {notesForSelected.length === 0 && <p>Brak notatek tego dnia.</p>}
