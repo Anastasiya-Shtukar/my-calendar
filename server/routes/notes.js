@@ -2,7 +2,7 @@ import express from "express";
 const router = express.Router();
 
 //tymczasowa tablica notatek
-const notes = [];
+let notes = [];
 
 // GET /notes - pobranie wszystkich notatek
 router.get("/", (req, res) => {
@@ -19,8 +19,17 @@ router.post("/", (req, res) => {
 // DELETE /notes/:id - usunięcie notatki
 router.delete("/:id", (req, res) => {
   const { id } = req.params;
-  notes = notes.filter((note) => note.id !== Number(id));
-  res.status(204).end();
+  try {
+    if (!Array.isArray(notes)) {
+      throw new Error("notes nie jest tablicą!");
+    }
+    // porównujemy jako stringi – bez Number
+    notes = notes.filter((note) => String(note.id) !== String(id));
+
+    res.status(204).end();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // PUT /notes/:id - edycja notatki
