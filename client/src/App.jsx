@@ -50,7 +50,6 @@ function App() {
     if (!trimmed) return;
 
     const newNote = {
-      id: Date.now(),
       text: trimmed,
       date: selectedDateStr,
     };
@@ -71,10 +70,10 @@ function App() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (_id) => {
     try {
-      await fetch(`http://localhost:3000/notes/${id}`, { method: "DELETE" });
-      dispatch(removeNote(id)); // dopiero teraz usuwamy z Redux
+      await fetch(`http://localhost:3000/notes/${_id}`, { method: "DELETE" });
+      dispatch(removeNote(_id)); // dopiero teraz usuwamy z Redux
     } catch (error) {
       console.error("Błąd usuwania notatki:", error);
     }
@@ -105,7 +104,7 @@ function App() {
             {notesForSelected.map((note) => (
               <li key={note.id} style={{ marginBottom: 6 }}>
                 {note.text}{" "}
-                <button onClick={() => handleDelete(note.id)}>Usuń</button>
+                <button onClick={() => handleDelete(note._id)}>Usuń</button>
               </li>
             ))}
             {notesForSelected.length === 0 && <p>Brak notatek tego dnia.</p>}
