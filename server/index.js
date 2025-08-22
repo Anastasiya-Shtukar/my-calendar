@@ -9,7 +9,7 @@ app.use(express.json());
 
 mongoose
   .connect(
-    "mongodb+srv://nastasija2409:pd2WdROlVZsjyn9n@cluster0.cxual.mongodb.net/"
+    "mongodb+srv://nastasija2409:pd2WdROlVZsjyn9n@cluster0.cxual.mongodb.net/my_calendar/calendar"
   )
   .then(() => console.log("✅ Połączono z MongoDB"))
   .catch((err) => console.error("❌ Błąd połączenia z MongoDB:", err));
