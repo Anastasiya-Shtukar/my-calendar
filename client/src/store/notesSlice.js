@@ -1,27 +1,29 @@
 // src/store/notesSlice.js
 import { createSlice } from "@reduxjs/toolkit";
 
-// Ustal kształt danych. Na start: id + tekst + (zaraz dodamy datę).
+// Stan początkowy: tablica notatek
+// Każda notatka ma strukturę: { _id, text, date }
 const initialState = {
-  notes: [], // np. [{id: 123, text: "Kup mleko", date: "2025-08-19"}]
+  notes: [],
 };
 
 const notesSlice = createSlice({
-  name: "notes", // nazwa gałęzi w store: state.notes
-  initialState, // stan początkowy
+  name: "notes",
+  initialState,
   reducers: {
-    // action.payload: { id, text, date }
+    setNotes: (state, action) => {
+      // nadpisujemy tablicę notes tym, co przyszło z backendu
+      state.notes = action.payload;
+    },
     addNote: (state, action) => {
       state.notes.push(action.payload);
     },
-    // action.payload: id
     removeNote: (state, action) => {
-      state.notes = state.notes.filter((n) => n.id !== action.payload);
+      state.notes = state.notes.filter((n) => n._id !== action.payload);
     },
-    // action.payload: { id, text? , date? }
     updateNote: (state, action) => {
-      const { id, text, date } = action.payload;
-      const note = state.notes.find((n) => n.id === id);
+      const { _id, text, date } = action.payload;
+      const note = state.notes.find((n) => n._id === _id);
       if (note) {
         if (typeof text === "string") note.text = text;
         if (typeof date === "string") note.date = date;
@@ -30,8 +32,5 @@ const notesSlice = createSlice({
   },
 });
 
-// Eksport akcji (wywołasz je przez dispatch w komponentach)
-export const { addNote, removeNote, updateNote } = notesSlice.actions;
-
-// Eksport reduktora (podłączony w store.js)
+export const { setNotes, addNote, removeNote, updateNote } = notesSlice.actions;
 export default notesSlice.reducer;

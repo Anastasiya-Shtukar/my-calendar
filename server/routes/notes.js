@@ -7,8 +7,9 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const notes = await Note.find();
-    res.json(notes);
+    res.json(notes); // zawsze tablica []
   } catch (err) {
+    console.error("❌ Błąd pobierania notatek:", err);
     res.status(500).json({ error: "Błąd pobierania notatek" });
   }
 });

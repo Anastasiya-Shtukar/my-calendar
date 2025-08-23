@@ -1,7 +1,7 @@
 // src/App.jsx
 import { useState, useMemo, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { addNote, removeNote } from "./store/notesSlice.js";
+import { addNote, removeNote, setNotes } from "./store/notesSlice.js";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
@@ -16,12 +16,12 @@ function App() {
   useEffect(() => {
     async function fetchNotes() {
       try {
-        // Wysyłamy GET do backendu
         const response = await fetch("http://localhost:3000/notes");
-        const data = await response.json(); // odczytujemy JSON
-        dispatch({ type: "notes/setNotes", payload: data }); // zapisujemy w Reduxie
+        const data = await response.json();
+        dispatch(setNotes(Array.isArray(data) ? data : [])); // <- gwarancja, że w Reduxie będzie tablica
       } catch (error) {
         console.error("Błąd pobierania notatek:", error);
+        dispatch(setNotes([]));
       }
     }
 
@@ -41,7 +41,10 @@ function App() {
 
   // Notatki tylko dla wybranej daty
   const notesForSelected = useMemo(
-    () => notes.filter((n) => n.date === selectedDateStr),
+    () =>
+      Array.isArray(notes)
+        ? notes.filter((n) => n.date === selectedDateStr)
+        : [],
     [notes, selectedDateStr]
   );
 
@@ -102,7 +105,7 @@ function App() {
           <h3>Notatki z dnia {selectedDateStr}</h3>
           <ul style={{ paddingLeft: 18 }}>
             {notesForSelected.map((note) => (
-              <li key={note.id} style={{ marginBottom: 6 }}>
+              <li key={note._id} style={{ marginBottom: 6 }}>
                 {note.text}{" "}
                 <button onClick={() => handleDelete(note._id)}>Usuń</button>
               </li>
