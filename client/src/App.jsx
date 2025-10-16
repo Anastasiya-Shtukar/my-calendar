@@ -1,121 +1,46 @@
-// src/App.jsx
-import { useState, useMemo, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { addNote, removeNote, setNotes } from "./store/notesSlice.js";
-import Calendar from "react-calendar";
-import "react-calendar/dist/Calendar.css";
+import { Routes, Route } from "react-router-dom";
+import { Layout } from "./components/Layout.jsx";
+import { lazy } from "react";
+import PrivateRoute from "./components/PrivateRoute.jsx";
+import RestrictedRoute from "./components/RestrictedRoute.jsx";
 
-function App() {
-  // 1) Odczyt stanu z Reduxa:
-  // state.notes (nazwa z store.js) -> .notes (tablica w initialState)
-  const notes = useSelector((state) => state.notes.notes);
+const HomePage = lazy(() => import("./pages/Home.jsx"));
+const NotesPage = lazy(() => import("./pages/Notes.jsx"));
+const RegisterPage = lazy(() => import("./pages/Register.jsx"));
+const LoginPage = lazy(() => import("./pages/Login.jsx"));
 
-  // 2) Dostęp do dispatch (wysyłanie akcji do store)
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    async function fetchNotes() {
-      try {
-        const response = await fetch("http://localhost:3000/notes");
-        const data = await response.json();
-        dispatch(setNotes(Array.isArray(data) ? data : [])); // <- gwarancja, że w Reduxie będzie tablica
-      } catch (error) {
-        console.error("Błąd pobierania notatek:", error);
-        dispatch(setNotes([]));
-      }
-    }
-
-    fetchNotes();
-  }, [dispatch]);
-
-  // 3) Lokalny stan formularza
-  const [text, setText] = useState("");
-
-  const [selectedDate, setSelectedDate] = useState(new Date());
-
-  // Z daty obiektu Date zrobimy "YYYY-MM-DD"
-  const selectedDateStr = useMemo(
-    () => selectedDate.toISOString().slice(0, 10),
-    [selectedDate]
-  );
-
-  // Notatki tylko dla wybranej daty
-  const notesForSelected = useMemo(
-    () =>
-      Array.isArray(notes)
-        ? notes.filter((n) => n.date === selectedDateStr)
-        : [],
-    [notes, selectedDateStr]
-  );
-
-  const handleAdd = async () => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-
-    const newNote = {
-      text: trimmed,
-      date: selectedDateStr,
-    };
-
-    try {
-      // Wysyłamy POST do backendu
-      const response = await fetch("http://localhost:3000/notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newNote),
-      });
-
-      const savedNote = await response.json(); // backend zwraca notatkę z potwierdzeniem
-      dispatch(addNote(savedNote)); // dopiero teraz zapisujemy w Redux
-      setText("");
-    } catch (error) {
-      console.error("Błąd dodawania notatki:", error);
-    }
-  };
-
-  const handleDelete = async (_id) => {
-    try {
-      await fetch(`http://localhost:3000/notes/${_id}`, { method: "DELETE" });
-      dispatch(removeNote(_id)); // dopiero teraz usuwamy z Redux
-    } catch (error) {
-      console.error("Błąd usuwania notatki:", error);
-    }
-  };
-
+export default function App() {
   return (
-    <div style={{ padding: 20, maxWidth: 900, margin: "0 auto" }}>
-      <h1>Kalendarz z notatkami 🗓️</h1>
+    <Layout>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 16 }}>
-        <div>
-          <Calendar value={selectedDate} onChange={setSelectedDate} />
-        </div>
+        <Route
+          path="/notes"
+          element={
+            <PrivateRoute redirectPath="/login" Component={<NotesPage />} />
+          }
+        />
 
-        <div>
-          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-            <input
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={`Notatka na ${selectedDateStr}`}
-              style={{ flex: 1 }}
+        <Route
+          path="/login"
+          element={
+            <RestrictedRoute redirectPath="/notes" Component={<LoginPage />} />
+          }
+        />
+
+        <Route
+          path="/register"
+          element={
+            <RestrictedRoute
+              redirectPath="/notes"
+              Component={<RegisterPage />}
             />
-            <button onClick={handleAdd}>Dodaj</button>
-          </div>
+          }
+        />
 
-          <h3>Notatki z dnia {selectedDateStr}</h3>
-          <ul style={{ paddingLeft: 18 }}>
-            {notesForSelected.map((note) => (
-              <li key={note._id} style={{ marginBottom: 6 }}>
-                {note.text}{" "}
-                <button onClick={() => handleDelete(note._id)}>Usuń</button>
-              </li>
-            ))}
-            {notesForSelected.length === 0 && <p>Brak notatek tego dnia.</p>}
-          </ul>
-        </div>
-      </div>
-    </div>
+        <Route path="*" element={<h2>404 - Strona nie istnieje</h2>} />
+      </Routes>
+    </Layout>
   );
 }
-
-export default App;
